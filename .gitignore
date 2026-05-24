@@ -1,0 +1,254 @@
+# Operating System Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.c9/
+*.sublime-workspace
+.vscode-test/
+.history/
+
+# Compiled/Build Files
+*.o
+*.obj
+*.a
+*.lib
+*.exe
+*.dll
+*.so
+*.dylib
+*.class
+*.jar
+*.war
+*.ear
+bin/
+build/
+dist/
+out/
+target/
+.gradle/
+
+# Node.js / npm / yarn
+node_modules/
+npm-debug.log
+npm-error.log
+yarn-error.log
+yarn-debug.log
+package-lock.json
+yarn.lock
+.npm/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+
+# Java
+*.class
+*.jar
+*.war
+*.nar
+/build/
+/bin/
+/dist/
+*.log
+.classpath
+.project
+.settings/
+.vscode/
+
+# Go
+*.out
+/dist
+go.sum
+vendor/
+
+# Ruby
+.bundle/
+vendor/bundle/
+Gemfile.lock
+
+# Rust
+/target/
+Cargo.lock
+
+# PHP
+vendor/
+composer.lock
+
+# Common IDE/Editor Files
+.vscode/
+.idea/
+.DS_Store
+*.sublime-project
+*.sublime-workspace
+.emacs_backup
+*~
+.swp
+.swo
+.netbeans/
+.swiftpm/
+xcuserdata/
+*.xcworkspace/contents.xcworkspacedata
+
+# Environment Variables
+.env
+.env.local
+.env.*.local
+.env.production.local
+.env.development.local
+.env.test.local
+
+# Temporary/Cache Files
+.cache/
+tmp/
+temp/
+*.tmp
+*.bak
+*.backup
+*.orig
+.sass-cache/
+
+# Logs
+logs/
+*.log
+log.txt
+*.out
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+*.mdb
+dump.rdb
+
+# OS-specific
+.Thumbs.db
+.DS_Store
+ehthumbs.db
+
+# ============================================
+# TERRAFORM - FILES AND FOLDERS TO IGNORE
+# ============================================
+# Terraform State Files (DO NOT COMMIT)
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+.terraform/
+.terraform.lock.hcl.lock
+.terraformrc
+terraform.rc
+
+# Terraform Plan Files (temporary, usually do not commit)
+*.tfplan
+*.out
+
+# Terraform Directories
+.terraform.d/
+
+# AWS Credentials and Secrets
+aws_credentials
+.aws/
+credentials
+secret_key
+
+# Override Files
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Crash Log Files
+crash.log
+crash.*.log
+
+# Ignore CLI configuration files
+cli.json
+
+# ============================================
+# TERRAFORM - FILES TO TRACK (NOT IGNORE)
+# ============================================
+# .tf files should be committed
+!*.tf
+!*.tfvars
+!terraform.tfvars
+# Module files should be committed
+!module/
+!modules/
+# Backend configuration should be committed
+!backend.tf
+# Variable definitions should be committed
+!variables.tf
+!outputs.tf
+
+# ============================================
+# Additional DevOps/Infrastructure Files
+# ============================================
+# Docker
+.dockerignore
+docker-compose.override.yml
+
+# Kubernetes
+kubeconfig
+.kubeconfig
+kube/secret.yaml
+
+# Ansible
+*.vault
+
+# Git
+.git
+.gitmodules
+
+# CI/CD
+.github/workflows/secrets.yml
+.gitlab-ci.secrets.yml
+
+# Build artifacts
+*.zip
+*.tar.gz
+*.tar
+*.rar
+
+# Version Control
+.hg/
+.svn/
+
