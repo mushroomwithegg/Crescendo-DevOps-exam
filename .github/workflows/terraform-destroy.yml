@@ -9,6 +9,11 @@ on:
         type: choice
         options:
           - dev
+      run_destroy_job:
+        description: 'Run the destroy job after approval'
+        required: true
+        type: boolean
+        default: false
 
 env:
   TERRAFORM_VERSION: v1.15.4
@@ -73,6 +78,7 @@ jobs:
     name: Approve Terraform Destroy - ${{ github.event.inputs.environment }}
     runs-on: ubuntu-latest
     needs: terraform-plan-destroy
+    if: ${{ inputs.run_destroy_job == true }}
     
     environment:
       name: ${{ github.event.inputs.environment }}
@@ -133,4 +139,4 @@ jobs:
           path: terraform/environments/${{ github.event.inputs.environment }}/
 
       - name: Terraform Destroy
-        run: terraform destroy -auto-approve destroy_plan
+        run: terraform apply -auto-approve destroy_plan
