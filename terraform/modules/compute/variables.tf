@@ -59,3 +59,9 @@ variable "volume_type" {
   type        = string
   default     = "gp2"
 }
+
+variable "ec2_instance_connect_cidr" {
+  description = "EC2 Instance Connect service IP CIDR block for the region"
+  type        = string
+  default     = "18.206.107.24/29"
+}

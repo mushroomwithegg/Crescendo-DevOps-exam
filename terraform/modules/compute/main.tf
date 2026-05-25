@@ -79,9 +79,9 @@ resource "aws_security_group_rule" "allow_ec2_instance_connect" {
   from_port         = 22
   to_port           = 22
   protocol          = "tcp"
-  cidr_blocks       = ["3.16.146.0/29"]
+  cidr_blocks       = [var.ec2_instance_connect_cidr]
   security_group_id = aws_security_group.instance_sg.id
-  description       = "EC2 Instance Connect"
+  description       = "EC2 Instance Connect (${var.ec2_instance_connect_cidr})"
 }
 
 # Launch template for ASG
@@ -101,8 +101,33 @@ resource "aws_launch_template" "web" {
 
   user_data = base64encode(<<-EOF
               #!/bin/bash
+              set -e
+              exec > >(tee /var/log/user-data.log)
+              exec 2>&1
+              
+              echo "[$(date)] Starting user data script"
+              
+              # Install httpd and ec2-instance-connect before attempting to write to webroot
+              echo "[$(date)] Installing packages..."
+              yum install -y httpd ec2-instance-connect
+              
+              # Enable and start httpd service
+              echo "[$(date)] Starting httpd service..."
+              systemctl enable httpd
+              systemctl start httpd
+              
+              # Verify httpd is running before writing to webroot
+              sleep 2
+              if ! systemctl is-active --quiet httpd; then
+                echo "[$(date)] ERROR: httpd failed to start"
+                exit 1
+              fi
+              
+              # Now write to webroot directory
+              echo "[$(date)] Creating health check page..."
               echo "Hello from $(hostname -f)" > /var/www/html/index.html
-              yum install -y httpd ec2-instance-connect && systemctl enable httpd && systemctl start httpd
+              
+              echo "[$(date)] User data script completed successfully"
               EOF
   )
 
