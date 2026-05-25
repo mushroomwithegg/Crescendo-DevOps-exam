@@ -82,11 +82,11 @@ jobs:
         run: terraform apply -auto-approve tfplan
 
       - name: Export Outputs
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        if: (github.ref == 'refs/heads/main' && github.event_name == 'push') || github.event_name == 'workflow_dispatch'
         run: terraform output -json > outputs.json
 
       - name: Upload Outputs
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        if: (github.ref == 'refs/heads/main' && github.event_name == 'push') || github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@v4
         with:
           name: terraform-outputs
