@@ -86,11 +86,11 @@ resource "aws_security_group_rule" "allow_ec2_instance_connect" {
 
 # Launch template for ASG
 resource "aws_launch_template" "web" {
-  name_prefix             = "${var.name}-web-"
-  image_id                = data.aws_ami.amazon_linux_2.id
-  instance_type           = var.instance_type
+  name_prefix   = "${var.name}-web-"
+  image_id      = data.aws_ami.amazon_linux_2.id
+  instance_type = var.instance_type
   iam_instance_profile {
-    arn = aws_iam_instance_profile.ec2_profile.arn
+    name = aws_iam_instance_profile.ec2_profile.name
   }
 
   network_interfaces {
