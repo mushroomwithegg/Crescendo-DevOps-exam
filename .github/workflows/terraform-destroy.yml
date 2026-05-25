@@ -9,11 +9,6 @@ on:
         type: choice
         options:
           - dev
-      run_destroy_job:
-        description: 'Run the destroy job after approval'
-        required: true
-        type: boolean
-        default: false
 
 env:
   TERRAFORM_VERSION: v1.15.4
