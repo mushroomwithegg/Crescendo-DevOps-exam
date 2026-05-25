@@ -46,7 +46,7 @@ resource "aws_launch_template" "web" {
   user_data = base64encode(<<-EOF
               #!/bin/bash
               echo "Hello from $(hostname -f)" > /var/www/html/index.html
-              yum install -y httpd && systemctl enable httpd && systemctl start httpd
+              yum install -y httpd git ansible && systemctl enable httpd && systemctl start httpd
               EOF
   )
 
