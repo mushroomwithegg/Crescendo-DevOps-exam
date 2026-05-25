@@ -110,7 +110,7 @@ resource "aws_launch_template" "web" {
               # Install httpd and ec2-instance-connect before attempting to write to webroot
               echo "[$(date)] Installing packages..."
               amazon-linux-extras install epel -y
-              yum install -y nginx ec2-instance-connect
+              yum install -y nginx ec2-instance-connect tomcat
               
               # Enable and start nginx service
               echo "[$(date)] Starting nginx service..."
@@ -124,6 +124,31 @@ resource "aws_launch_template" "web" {
                 exit 1
               fi
               
+              # Install Magnolia CMS (example application)
+              wget -O magnolia-cms.zip https://nexus.magnolia-cms.com/repository/public/info/magnolia/bundle/magnolia-community-demo-webapp/6.2.74/magnolia-community-demo-webapp-6.2.74-tomcat-bundle.zip
+              unzip magnolia-cms.zip
+              ./$(find . -name magnolia_control.sh) start --ignore-open-files-limit
+
+              # Create nginx reverse proxy configuration for Magnolia CMS
+              echo "[$(date)] Creating nginx reverse proxy for Magnolia CMS..."
+              cat > /etc/nginx/conf.d/magnolia.conf <<'NGINX_CONF'
+              server {
+                listen 80;
+                server_name _;
+
+                location / {
+                  proxy_pass http://localhost:8080;
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Real-IP $remote_addr;
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto $scheme;
+                }
+              }
+              NGINX_CONF
+              
+              # Reload nginx to apply the new configuration
+              systemctl reload nginx
+
               # Now write to webroot directory
               echo "[$(date)] Creating health check page..."
               echo "<h1>Hello from Nginx on Amazon Linux!</h1>" > /usr/share/nginx/html/index.html
