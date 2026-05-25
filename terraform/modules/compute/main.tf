@@ -46,13 +46,22 @@ resource "aws_launch_template" "web" {
   user_data = base64encode(<<-EOF
               #!/bin/bash
               echo "Hello from $(hostname -f)" > /var/www/html/index.html
-              yum install -y httpd git ansible && systemctl enable httpd && systemctl start httpd
+              yum install -y httpd && systemctl enable httpd && systemctl start httpd
               EOF
   )
 
   tag_specifications {
     resource_type = "instance"
     tags          = { Name = "${var.name}-web" }
+  }
+
+  block_device_mappings {
+    device_name = "/dev/xvda"
+    ebs {
+      volume_size           = var.volume_size
+      volume_type           = var.volume_type
+      delete_on_termination = true
+    }
   }
 
   lifecycle {

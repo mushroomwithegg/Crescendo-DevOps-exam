@@ -47,3 +47,15 @@ variable "asg_desired_capacity" {
   type        = number
   default     = 2
 }
+
+variable "volume_size" {
+  description = "EBS volume size in GB"
+  type        = number
+  default     = 50
+}
+
+variable "volume_type" {
+  description = "EBS volume type"
+  type        = string
+  default     = "gp2"
+}
