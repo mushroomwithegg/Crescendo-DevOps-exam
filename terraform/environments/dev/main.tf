@@ -29,7 +29,7 @@ module "compute" {
   source                = "../../modules/compute"
   name                  = var.name
   vpc_id                = module.network.vpc_id
-  public_subnet_id      = module.network.public_subnets[0]
+  public_subnet_ids     = module.network.public_subnets
   target_group_arn      = module.network.target_group_arn
   alb_security_group_id = module.network.alb_security_group_id
   instance_type         = var.instance_type

@@ -9,9 +9,9 @@ variable "vpc_id" {
   type        = string
 }
 
-variable "public_subnet_id" {
-  description = "A public subnet id to launch the instance in"
-  type        = string
+variable "public_subnet_ids" {
+  description = "List of public subnet IDs for multi-AZ deployment"
+  type        = list(string)
 }
 
 variable "target_group_arn" {
