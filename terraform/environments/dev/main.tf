@@ -7,7 +7,7 @@ terraform {
   }
   backend "s3" {
     bucket       = "blackofi-terraform-storage"
-    key          = "dev.tfstate"
+    key          = "crescendo/dev.tfstate"
     region       = "us-east-2"
     use_lockfile = true
   }

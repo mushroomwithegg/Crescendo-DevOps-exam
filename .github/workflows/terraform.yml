@@ -1,0 +1,111 @@
+name: Terraform Refresh, Plan & Apply
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'terraform/**'
+      - '.github/workflows/terraform.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'terraform/**'
+  workflow_dispatch:
+
+env:
+  TERRAFORM_VERSION: v1.15.4
+
+jobs:
+  terraform:
+    name: Terraform Refresh, Plan & Apply
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        environment: [dev]
+    
+    environment: ${{ matrix.environment }}
+
+    env:
+      ENVIRONMENT: ${{ matrix.environment }}
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
+
+    defaults:
+      run:
+        working-directory: terraform/environments/${{ matrix.environment }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive ../../
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Refresh
+        run: terraform refresh
+        if: github.event_name != 'pull_request'
+
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -out=tfplan
+        continue-on-error: true
+
+      - name: Comment PR with Plan
+        uses: actions/github-script@v7
+        if: github.event_name == 'pull_request'
+        with:
+          script: |
+            const fs = require('fs');
+            const planOutput = ${{ steps.plan.outputs.stdout }};
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '## Terraform Plan\n```\n' + planOutput + '\n```'
+            });
+
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: terraform apply -auto-approve tfplan
+
+      - name: Terraform Apply with Manual Approval
+        if: github.event_name == 'workflow_dispatch'
+        run: terraform apply -auto-approve tfplan
+
+      - name: Export Outputs
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: terraform output -json > outputs.json
+
+      - name: Upload Outputs
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: actions/upload-artifact@v3
+        with:
+          name: terraform-outputs
+          path: terraform/environments/${{ matrix.environment }}/outputs.json
+          retention-days: 30
