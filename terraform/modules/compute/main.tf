@@ -21,6 +21,48 @@ resource "aws_security_group" "instance_sg" {
   tags = { Name = "${var.name}-instance-sg" }
 }
 
+# IAM role for EC2 instances
+resource "aws_iam_role" "ec2_role" {
+  name_prefix = "${var.name}-ec2-"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "ec2.amazonaws.com"
+        }
+      }
+    ]
+  })
+}
+
+# IAM policy for EC2 Instance Connect
+resource "aws_iam_role_policy" "ec2_instance_connect" {
+  name_prefix = "${var.name}-ec2-connect-"
+  role        = aws_iam_role.ec2_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ec2-instance-connect:SendSSHPublicKey"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_instance_profile" "ec2_profile" {
+  name_prefix = "${var.name}-ec2-profile-"
+  role        = aws_iam_role.ec2_role.name
+}
+
 # Allow incoming traffic from ALB security group
 resource "aws_security_group_rule" "allow_from_alb" {
   type                     = "ingress"
@@ -31,11 +73,25 @@ resource "aws_security_group_rule" "allow_from_alb" {
   source_security_group_id = var.alb_security_group_id
 }
 
+# Allow EC2 Instance Connect
+resource "aws_security_group_rule" "allow_ec2_instance_connect" {
+  type              = "ingress"
+  from_port         = 22
+  to_port           = 22
+  protocol          = "tcp"
+  cidr_blocks       = ["3.16.146.0/29"]
+  security_group_id = aws_security_group.instance_sg.id
+  description       = "EC2 Instance Connect"
+}
+
 # Launch template for ASG
 resource "aws_launch_template" "web" {
-  name_prefix   = "${var.name}-web-"
-  image_id      = data.aws_ami.amazon_linux_2.id
-  instance_type = var.instance_type
+  name_prefix             = "${var.name}-web-"
+  image_id                = data.aws_ami.amazon_linux_2.id
+  instance_type           = var.instance_type
+  iam_instance_profile {
+    arn = aws_iam_instance_profile.ec2_profile.arn
+  }
 
   network_interfaces {
     associate_public_ip_address = true
@@ -46,7 +102,7 @@ resource "aws_launch_template" "web" {
   user_data = base64encode(<<-EOF
               #!/bin/bash
               echo "Hello from $(hostname -f)" > /var/www/html/index.html
-              yum install -y httpd && systemctl enable httpd && systemctl start httpd
+              yum install -y httpd ec2-instance-connect && systemctl enable httpd && systemctl start httpd
               EOF
   )
 
