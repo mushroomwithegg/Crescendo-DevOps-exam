@@ -19,6 +19,8 @@ jobs:
     name: Plan Terraform Destroy - ${{ github.event.inputs.environment }}
     runs-on: ubuntu-latest
 
+    environment: ${{ github.event.inputs.environment }}
+
     env:
       ENVIRONMENT: ${{ github.event.inputs.environment }}
       AWS_REGION: ${{ vars.AWS_REGION }}
@@ -73,7 +75,7 @@ jobs:
     needs: terraform-plan-destroy
     
     environment:
-      name: ${{ github.event.inputs.environment }}-destroy
+      name: ${{ github.event.inputs.environment }}
 
     permissions:
       contents: read
