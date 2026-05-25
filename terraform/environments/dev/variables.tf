@@ -37,13 +37,13 @@ variable "asg_min_size" {
 variable "asg_max_size" {
   description = "Maximum number of instances in ASG"
   type        = number
-  default     = 3
+  default     = 2
 }
 
 variable "asg_desired_capacity" {
   description = "Desired number of instances in ASG"
   type        = number
-  default     = 2
+  default     = 1
 }
 
 variable "volume_size" {

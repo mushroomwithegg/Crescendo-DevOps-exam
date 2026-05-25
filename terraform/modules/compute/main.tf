@@ -109,23 +109,24 @@ resource "aws_launch_template" "web" {
               
               # Install httpd and ec2-instance-connect before attempting to write to webroot
               echo "[$(date)] Installing packages..."
-              yum install -y httpd ec2-instance-connect
+              amazon-linux-extras install epel -y
+              yum install -y nginx ec2-instance-connect
               
-              # Enable and start httpd service
-              echo "[$(date)] Starting httpd service..."
-              systemctl enable httpd
-              systemctl start httpd
+              # Enable and start nginx service
+              echo "[$(date)] Starting nginx service..."
+              systemctl enable nginx
+              systemctl start nginx
               
-              # Verify httpd is running before writing to webroot
+              # Verify nginx is running before writing to webroot
               sleep 2
-              if ! systemctl is-active --quiet httpd; then
-                echo "[$(date)] ERROR: httpd failed to start"
+              if ! systemctl is-active --quiet nginx; then
+                echo "[$(date)] ERROR: nginx failed to start"
                 exit 1
               fi
               
               # Now write to webroot directory
               echo "[$(date)] Creating health check page..."
-              echo "Hello from $(hostname -f)" > /var/www/html/index.html
+              echo "<h1>Hello from Nginx on Amazon Linux!</h1>" > /usr/share/nginx/html/index.html
               
               echo "[$(date)] User data script completed successfully"
               EOF
