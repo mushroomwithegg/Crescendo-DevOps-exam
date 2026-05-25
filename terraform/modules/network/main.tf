@@ -11,7 +11,7 @@ resource "aws_vpc" "this" {
 
 resource "aws_internet_gateway" "igw" {
   vpc_id = aws_vpc.this.id
-  tags = { Name = "${var.name}-igw" }
+  tags   = { Name = "${var.name}-igw" }
 }
 
 resource "aws_subnet" "public" {
@@ -20,7 +20,7 @@ resource "aws_subnet" "public" {
   cidr_block              = cidrsubnet(var.vpc_cidr, 8, count.index * 2)
   availability_zone       = data.aws_availability_zones.available.names[count.index]
   map_public_ip_on_launch = true
-  tags = { Name = "${var.name}-public-${count.index + 1}" }
+  tags                    = { Name = "${var.name}-public-${count.index + 1}" }
 }
 
 resource "aws_subnet" "private" {
@@ -28,7 +28,7 @@ resource "aws_subnet" "private" {
   vpc_id            = aws_vpc.this.id
   cidr_block        = cidrsubnet(var.vpc_cidr, 8, count.index * 2 + 1)
   availability_zone = data.aws_availability_zones.available.names[count.index]
-  tags = { Name = "${var.name}-private-${count.index + 1}" }
+  tags              = { Name = "${var.name}-private-${count.index + 1}" }
 }
 
 resource "aws_eip" "nat" {
@@ -46,7 +46,7 @@ resource "aws_nat_gateway" "nat" {
 
 resource "aws_route_table" "public" {
   vpc_id = aws_vpc.this.id
-  tags = { Name = "${var.name}-public-rt" }
+  tags   = { Name = "${var.name}-public-rt" }
 }
 
 resource "aws_route" "public_internet_access" {
@@ -63,7 +63,7 @@ resource "aws_route_table_association" "public_assoc" {
 
 resource "aws_route_table" "private" {
   vpc_id = aws_vpc.this.id
-  tags = { Name = "${var.name}-private-rt" }
+  tags   = { Name = "${var.name}-private-rt" }
 }
 
 resource "aws_route" "private_nat" {
@@ -107,7 +107,7 @@ resource "aws_lb" "alb" {
   load_balancer_type = "application"
   subnets            = aws_subnet.public[*].id
   security_groups    = [aws_security_group.alb_sg.id]
-  tags = { Name = "${var.name}-alb" }
+  tags               = { Name = "${var.name}-alb" }
 }
 
 resource "aws_lb_target_group" "app" {

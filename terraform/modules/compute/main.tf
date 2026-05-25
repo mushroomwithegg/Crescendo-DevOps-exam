@@ -62,10 +62,10 @@ resource "aws_launch_template" "web" {
 
 # Auto Scaling Group
 resource "aws_autoscaling_group" "web" {
-  name                = "${var.name}-web-asg"
-  vpc_zone_identifier = [var.public_subnet_id]
-  target_group_arns   = [var.target_group_arn]
-  health_check_type   = "ELB"
+  name                      = "${var.name}-web-asg"
+  vpc_zone_identifier       = [var.public_subnet_id]
+  target_group_arns         = [var.target_group_arn]
+  health_check_type         = "ELB"
   health_check_grace_period = 300
 
   min_size         = var.asg_min_size
