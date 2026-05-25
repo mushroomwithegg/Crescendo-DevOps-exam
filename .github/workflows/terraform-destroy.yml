@@ -1,0 +1,134 @@
+name: Terraform Destroy
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to destroy (dev, staging, prod, etc.)'
+        required: true
+        type: choice
+        options:
+          - dev
+
+env:
+  TERRAFORM_VERSION: v1.15.4
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  terraform-plan-destroy:
+    name: Plan Terraform Destroy - ${{ github.event.inputs.environment }}
+    runs-on: ubuntu-latest
+
+    env:
+      ENVIRONMENT: ${{ github.event.inputs.environment }}
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    
+    permissions:
+      contents: read
+      id-token: write
+
+    defaults:
+      run:
+        working-directory: terraform/environments/${{ github.event.inputs.environment }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Destroy Plan
+        id: destroy_plan
+        run: terraform plan -destroy -out=destroy_plan
+        continue-on-error: true
+
+      - name: Display Destroy Plan
+        run: terraform show destroy_plan
+
+      - name: Upload Destroy Plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: destroy-plan-${{ github.event.inputs.environment }}
+          path: terraform/environments/${{ github.event.inputs.environment }}/destroy_plan
+          retention-days: 1
+
+  terraform-approval:
+    name: Approve Terraform Destroy - ${{ github.event.inputs.environment }}
+    runs-on: ubuntu-latest
+    needs: terraform-plan-destroy
+    
+    environment:
+      name: ${{ github.event.inputs.environment }}-destroy
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Destroy Approved
+        run: echo "✅ Terraform destroy for ${{ github.event.inputs.environment }} has been approved"
+
+  terraform-execute-destroy:
+    name: Execute Terraform Destroy - ${{ github.event.inputs.environment }}
+    runs-on: ubuntu-latest
+    needs: terraform-approval
+
+    environment:
+      name: ${{ github.event.inputs.environment }}
+      deployment: false
+
+    env:
+      ENVIRONMENT: ${{ github.event.inputs.environment }}
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    
+    permissions:
+      contents: read
+      id-token: write
+
+    defaults:
+      run:
+        working-directory: terraform/environments/${{ github.event.inputs.environment }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Download Destroy Plan
+        uses: actions/download-artifact@v4
+        with:
+          name: destroy-plan-${{ github.event.inputs.environment }}
+          path: terraform/environments/${{ github.event.inputs.environment }}/
+
+      - name: Terraform Destroy
+        run: terraform destroy -auto-approve destroy_plan
