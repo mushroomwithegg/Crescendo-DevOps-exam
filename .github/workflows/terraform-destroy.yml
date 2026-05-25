@@ -74,26 +74,10 @@ jobs:
           path: terraform/environments/${{ github.event.inputs.environment }}/destroy_plan
           retention-days: 1
 
-  terraform-approval:
-    name: Approve Terraform Destroy - ${{ github.event.inputs.environment }}
-    runs-on: ubuntu-latest
-    needs: terraform-plan-destroy
-    if: ${{ inputs.run_destroy_job == true }}
-    
-    environment:
-      name: ${{ github.event.inputs.environment }}
-
-    permissions:
-      contents: read
-
-    steps:
-      - name: Destroy Approved
-        run: echo "✅ Terraform destroy for ${{ github.event.inputs.environment }} has been approved"
-
   terraform-execute-destroy:
     name: Execute Terraform Destroy - ${{ github.event.inputs.environment }}
     runs-on: ubuntu-latest
-    needs: terraform-approval
+    needs: terraform-plan-destroy
 
     environment:
       name: ${{ github.event.inputs.environment }}
