@@ -225,14 +225,6 @@ resource "aws_wafv2_web_acl" "cloudfront_waf" {
   tags = { Name = "${var.name}-cloudfront-waf" }
 }
 
-# CloudFront Origin Access Control (for ALB)
-resource "aws_cloudfront_origin_access_control" "alb_oac" {
-  name                              = "${var.name}-alb-oac"
-  description                       = "OAC for ALB origin"
-  origin_access_control_origin_type = "http"
-  signing_behavior                  = "never"
-}
-
 # CloudFront Distribution
 resource "aws_cloudfront_distribution" "alb_distribution" {
   origin {
