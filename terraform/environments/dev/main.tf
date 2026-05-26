@@ -45,6 +45,11 @@ output "alb_dns" {
   description = "DNS name of the Application Load Balancer"
 }
 
+output "cloudfront_dns" {
+  value       = module.network.cloudfront_domain_name
+  description = "CloudFront distribution domain name"
+}
+
 output "asg_name" {
   value       = module.compute.asg_name
   description = "Name of the Auto Scaling Group managing EC2 instances"

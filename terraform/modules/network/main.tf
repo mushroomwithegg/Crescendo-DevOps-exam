@@ -136,3 +136,157 @@ resource "aws_lb_listener" "http" {
     target_group_arn = aws_lb_target_group.app.arn
   }
 }
+
+# WAF Web ACL
+resource "aws_wafv2_web_acl" "cloudfront_waf" {
+  name        = "${var.name}-cloudfront-waf"
+  description = "WAF for CloudFront distribution"
+  scope       = "CLOUDFRONT"
+
+  default_action {
+    allow {}
+  }
+
+  # AWS Managed Rule - AWSManagedRulesCommonRuleSet
+  rule {
+    name     = "AWSManagedRulesCommonRuleSet"
+    priority = 0
+
+    override_action {
+      none {}
+    }
+
+    statement {
+      managed_rule_group_statement {
+        name        = "AWSManagedRulesCommonRuleSet"
+        vendor_name = "AWS"
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "${var.name}-common-rule-set-metric"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  # AWS Managed Rule - AWSManagedRulesKnownBadInputsRuleSet
+  rule {
+    name     = "AWSManagedRulesKnownBadInputsRuleSet"
+    priority = 1
+
+    override_action {
+      none {}
+    }
+
+    statement {
+      managed_rule_group_statement {
+        name        = "AWSManagedRulesKnownBadInputsRuleSet"
+        vendor_name = "AWS"
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "${var.name}-known-bad-inputs-metric"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  # Rate limiting rule
+  rule {
+    name     = "RateLimitRule"
+    priority = 2
+
+    action {
+      block {}
+    }
+
+    statement {
+      rate_based_statement {
+        limit              = 2000
+        aggregate_key_type = "IP"
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "${var.name}-rate-limit-metric"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  visibility_config {
+    cloudwatch_metrics_enabled = true
+    metric_name                = "${var.name}-cloudfront-waf-metrics"
+    sampled_requests_enabled   = true
+  }
+
+  tags = { Name = "${var.name}-cloudfront-waf" }
+}
+
+# CloudFront Origin Access Control (for ALB)
+resource "aws_cloudfront_origin_access_control" "alb_oac" {
+  name                              = "${var.name}-alb-oac"
+  description                       = "OAC for ALB origin"
+  origin_access_control_origin_type = "http"
+  signing_behavior                  = "never"
+}
+
+# CloudFront Distribution
+resource "aws_cloudfront_distribution" "alb_distribution" {
+  origin {
+    domain_name = aws_lb.alb.dns_name
+    origin_id   = "ALB"
+
+    custom_origin_config {
+      http_port              = 80
+      https_port             = 443
+      origin_protocol_policy = "http-only"
+      origin_ssl_protocols   = ["TLSv1.2"]
+    }
+
+    custom_header {
+      name  = "X-Custom-Header"
+      value = "From-CloudFront"
+    }
+  }
+
+  enabled         = true
+  is_ipv6_enabled = true
+
+  default_cache_behavior {
+    allowed_methods  = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+    cached_methods   = ["GET", "HEAD"]
+    target_origin_id = "ALB"
+
+    forwarded_values {
+      query_string = true
+      cookies {
+        forward = "all"
+      }
+      headers = ["Host", "CloudFront-Viewer-Country"]
+    }
+
+    compress               = true
+    viewer_protocol_policy = "redirect-to-https"
+    default_ttl            = 300
+    max_ttl                = 3600
+  }
+
+  price_class = "PriceClass_100"
+
+  restrictions {
+    geo_restriction {
+      restriction_type = "none"
+    }
+  }
+
+  viewer_certificate {
+    cloudfront_default_certificate = true
+  }
+
+  web_acl_id = aws_wafv2_web_acl.cloudfront_waf.arn
+
+  tags = { Name = "${var.name}-cloudfront" }
+}
